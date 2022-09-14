@@ -9,7 +9,7 @@ from project.graph_lib import *
 def test_get_graph_info():
     actual_info = get_graph_info(True, "people")
     expected_info = GraphInformation(
-        377,
+        337,
         640,
         {
             "allValuesFrom",

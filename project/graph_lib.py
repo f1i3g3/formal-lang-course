@@ -3,12 +3,12 @@ import cfpq_data
 import networkx
 
 
-def get_gr_info(gr_name: string):
-    gr = cfpq_data.graph_from_csv(cfpq_data.download(gr_name))
+def get_graph_info(gr_name: string):
+    graph = cfpq_data.graph_from_csv(cfpq_data.download(gr_name))
 
-    nodes_num = gr.number_of_nodes()
-    edges_num = gr.number_of_edges()
-    labels = {i[2]["label"] for i in gr.edges.data(default=True)}
+    nodes_num = graph.number_of_nodes()
+    edges_num = graph.number_of_edges()
+    labels = {i[2]["label"] for i in graph.edges.data(default=True)}
 
     return nodes_num, edges_num, labels
 

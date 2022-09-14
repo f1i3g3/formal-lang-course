@@ -1,4 +1,4 @@
-import project.gr_lib
-from project.gr_lib import *
+import project.graph_lib
+from project.graph_lib import *
 
 print("import sources directory")

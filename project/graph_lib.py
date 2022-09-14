@@ -1,15 +1,13 @@
-import string
-from typing import Iterable
+from typing import Set
 
 import cfpq_data
 import networkx
-import networkx as nx
 
 
 class GraphInformation:
     nodes: int
     edges: int
-    labels: Iterable[str]
+    labels: Set[str]
 
     def __init__(self, nodes, edges, labels):
         self.nodes = nodes
@@ -41,6 +39,8 @@ def get_graph_info(load_flag: bool, graph_param):
 
 
 def generate_and_write_two_cycles_graph(n, m, labels, path):
-    networkx.drawing.nx_pydot.write_dot(
-        cfpq_data.labeled_two_cycles_graph(n, m, labels=labels), path
-    )
+    if n <= 0 or m <= 0 or not labels:
+        raise Exception("Check input parameters!")
+    graph = cfpq_data.labeled_two_cycles_graph(n, m, labels=labels)
+
+    networkx.drawing.nx_pydot.write_dot(graph, path)

@@ -38,9 +38,7 @@ def get_graph_info(load_flag: bool, graph_param):
     return GraphInformation(nodes_num, edges_num, labels)
 
 
-def generate_and_write_two_cycles_graph(n, m, labels, path):
-    if n <= 0 or m <= 0 or not labels:
-        raise Exception("Check input parameters!")
-    graph = cfpq_data.labeled_two_cycles_graph(n, m, labels=labels)
+def generate_and_write_two_cycles_graph(num_first, num_second, labels, path):
+    graph = cfpq_data.labeled_two_cycles_graph(num_first, num_second, labels=labels)
 
     networkx.drawing.nx_pydot.write_dot(graph, path)

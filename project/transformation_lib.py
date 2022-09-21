@@ -7,7 +7,7 @@ from pyformlang.finite_automaton import (
 import networkx
 
 
-def regex_to_dfa(rx):
+def regex_to_nfa(rx):
     return Regex(rx).to_epsilon_nfa().minimize()
 
 

@@ -1,8 +1,11 @@
 from project.transformation_lib import *
 
+import pytest
+import networkx
+
 
 def test_nonexistent_start():
-    graph = nx.MultiDiGraph()
+    graph = networkx.MultiDiGraph()
     graph.add_edge(0, 0, label="1")
     graph.add_edge(0, 1, label="0")
     graph.add_edge(1, 1, label="0")
@@ -14,7 +17,7 @@ def test_nonexistent_start():
 
 
 def test_ended_by_zero():
-    graph = nx.MultiDiGraph()
+    graph = networkx.MultiDiGraph()
     graph.add_edge(0, 0, label="1")
     graph.add_edge(0, 1, label="0")
     graph.add_edge(1, 1, label="0")
@@ -27,7 +30,7 @@ def test_ended_by_zero():
 
 
 def test_binary_ended_by_banana_ananas():
-    graph = nx.MultiDiGraph()
+    graph = networkx.MultiDiGraph()
     for i in range(ord("a"), ord("z") + 1):
         graph.add_edge(0, 0, label=chr(i))
     graph.add_edge(0, 0, label=" ")

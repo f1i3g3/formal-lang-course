@@ -21,7 +21,7 @@ def graph_to_nfa(
         [(x, l, y) for x, y, l in initial_graph.edges(data="label") if l]
     )
 
-    nodes = initial_graph.nodes
+    nodes = initial_graph.nodes()
 
     if not start_states:
         start_states = nodes
@@ -42,4 +42,4 @@ def graph_to_nfa(
     for s in final_states:
         final_graph.add_final_state(s)
 
-    return final_states
+    return final_graph

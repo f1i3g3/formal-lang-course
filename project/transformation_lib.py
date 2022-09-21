@@ -11,7 +11,7 @@ def regex_to_nfa(rx):
     return Regex(rx).to_epsilon_nfa().minimize()
 
 
-def graph_to_dfa(
+def graph_to_nfa(
     initial_graph, start_states: set | None = None, final_states: set | None = None
 ):
     final_graph = NondeterministicFiniteAutomaton()

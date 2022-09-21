@@ -10,6 +10,7 @@ def test_nonexistent_start():
     graph.add_edge(0, 1, label="0")
     graph.add_edge(1, 1, label="0")
     graph.add_edge(1, 0, label="1")
+
     with pytest.raises(Exception, match=".* start .*"):
         graph_to_nfa(graph, {42}, {0})
     with pytest.raises(Exception, match=".* final .*"):
@@ -23,7 +24,8 @@ def test_ended_by_zero():
     graph.add_edge(1, 1, label="0")
     graph.add_edge(1, 0, label="1")
     nfa = graph_to_nfa(graph, {0}, {1})
-    assert nfa.is_equivalent_to(regex_str_to_dfa("(0|1)* 0"))
+
+    assert nfa.is_equivalent_to(regex_to_dfa("(0|1)* 0"))
     for i in range(0, 42, 2):
         assert nfa.accepts("{0:b}".format(i))
         assert not nfa.accepts("{0:b}".format(i + 1))
@@ -47,5 +49,5 @@ def test_binary_ended_by_banana_ananas():
 
     assert nfa.accepts("banana")
     assert nfa.accepts("ananas")
-    assert nfa.accepts("bananas")
+    assert nfa.accepts("_ bananas")
     assert not nfa.accepts("apple")

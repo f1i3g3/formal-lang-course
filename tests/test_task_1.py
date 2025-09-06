@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from project.graph_lib import get_graph_info, GraphInformation, generate_and_write_two_cycles_graph
+from project.graph_lib import (
+    get_graph_info,
+    GraphInformation,
+    generate_and_write_two_cycles_graph,
+)
 
 
 def test_get_graph_info():
@@ -63,6 +67,4 @@ def test_generate_graph_without_cycles():
     gen_path = Path(Path(__file__).parent, "files", "non_exist.dot")
 
     with pytest.raises(Exception):
-        generate_and_write_two_cycles_graph(
-            0, 0, ("x", "y"), gen_path
-        )
+        generate_and_write_two_cycles_graph(0, 0, ("x", "y"), gen_path)

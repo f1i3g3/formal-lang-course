@@ -8,6 +8,7 @@ class GraphInformation:
     """
     Class for storing some graph properties.
     """
+
     nodes: int
     edges: int
     labels: Set[str]
@@ -19,10 +20,10 @@ class GraphInformation:
 
     def __eq__(self, other):
         result = (
-                isinstance(other, GraphInformation)
-                and self.nodes == other.nodes
-                and self.edges == other.edges
-                and self.labels == other.labels
+            isinstance(other, GraphInformation)
+            and self.nodes == other.nodes
+            and self.edges == other.edges
+            and self.labels == other.labels
         )
 
         return result

@@ -6,7 +6,7 @@ import networkx
 
 class GraphInformation:
     """
-    
+    Class for storing some graph properties.
     """
     nodes: int
     edges: int
@@ -30,12 +30,10 @@ class GraphInformation:
 
 def get_graph_info(graph_name):
     """
-
+    Retrieve GraphInformation by graph's name.
     """
     path = cfpq_data.download(graph_name)
-
     graph = cfpq_data.graph_from_csv(path)
-    # TODO: add documentation!!!
 
     nodes_num = graph.number_of_nodes()
     edges_num = graph.number_of_edges()
@@ -46,7 +44,7 @@ def get_graph_info(graph_name):
 
 def generate_and_write_two_cycles_graph(num_first, num_second, labels, path):
     """
-
+    Create a two-cycle graph with numbers of nodes in cycles and given labels and save it in DOT format by given path.
     """
     graph = cfpq_data.labeled_two_cycles_graph(num_first, num_second, labels=labels)
 

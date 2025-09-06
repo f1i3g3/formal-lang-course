@@ -55,12 +55,13 @@ def test_generate_two_cycles_graph():
 
     generate_and_write_two_cycles_graph(3, 2, ("x", "y"), gen_path)
 
-    assert filecmp.cmp(expect_path, gen_path)
+    assert filecmp.cmp(str(expect_path), str(gen_path))
     os.remove(gen_path)
 
 
 def test_generate_graph_without_cycles():
     gen_path = Path(Path(__file__).parent, "files", "non_exist.dot")
+
     with pytest.raises(Exception):
         generate_and_write_two_cycles_graph(
             0, 0, ("x", "y"), gen_path

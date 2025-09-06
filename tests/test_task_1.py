@@ -55,7 +55,7 @@ def test_generate_two_cycles_graph():
 
     generate_and_write_two_cycles_graph(3, 2, ("x", "y"), gen_path)
 
-    assert filecmp.cmp(str(expect_path), str(gen_path))
+    assert filecmp.cmp(expect_path, gen_path)
     os.remove(gen_path)
 
 

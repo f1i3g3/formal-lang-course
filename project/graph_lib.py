@@ -50,4 +50,4 @@ def generate_and_write_two_cycles_graph(num_first, num_second, labels, path):
     """
     graph = cfpq_data.labeled_two_cycles_graph(num_first, num_second, labels=labels)
 
-    networkx.nx_pydot.write_dot(graph, str(path))
+    networkx.nx_pydot.write_dot(graph, path)

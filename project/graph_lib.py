@@ -3,7 +3,10 @@ from typing import Set
 import cfpq_data
 import networkx
 from networkx import MultiDiGraph
-from pyformlang.finite_automaton import DeterministicFiniteAutomaton, NondeterministicFiniteAutomaton
+from pyformlang.finite_automaton import (
+    DeterministicFiniteAutomaton,
+    NondeterministicFiniteAutomaton,
+)
 from pyformlang.regular_expression import Regex
 
 
@@ -57,20 +60,20 @@ def generate_and_write_two_cycles_graph(num_first, num_second, labels, path):
 
 def regex_to_dfa(regex: str) -> DeterministicFiniteAutomaton:
     """
-
+    Converts a regular expression string into a minimal deterministic finite automaton (DFA).
     """
     return Regex(regex).to_epsilon_nfa().minimize()
 
 
 def graph_to_nfa(
-        graph: MultiDiGraph, start_states: Set[int] = None, final_states: Set[int] = None
+    graph: MultiDiGraph, start_states: Set[int] = None, final_states: Set[int] = None
 ) -> NondeterministicFiniteAutomaton:
     """
-
+    Converts a directed multi graph with labeled edges into a nondeterministic finite automaton (NFA).
     """
     result_graph = NondeterministicFiniteAutomaton()
     result_graph.add_transitions(
-        [(x, l, y) for x, y, l in graph.edges(data="label") if l]
+        [(x, label, y) for x, y, label in graph.edges(data="label") if label]
     )
 
     # TODO: documentation!!

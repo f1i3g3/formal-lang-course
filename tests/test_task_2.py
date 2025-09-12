@@ -64,7 +64,7 @@ def test_power_two():
     dfa = regex_to_dfa("1 (0)*")
     assert dfa.is_deterministic
     for i in range(1, 5):
-        assert dfa.accepts("{0:b}".format(2 ** i))
+        assert dfa.accepts("{0:b}".format(2**i))
     assert not dfa.accepts("0")
     assert not dfa.accepts("1001")
 

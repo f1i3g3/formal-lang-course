@@ -75,9 +75,6 @@ def graph_to_nfa(
     result_graph.add_transitions(
         [(x, label, y) for x, y, label in graph.edges(data="label") if label]
     )
-
-    # TODO: documentation!!
-
     nodes = graph.nodes()
 
     if not start_states:

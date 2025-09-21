@@ -12,10 +12,8 @@ def test_nonexistent_start():
     initial_graph.add_edge(1, 1, label="0")
     initial_graph.add_edge(1, 0, label="1")
 
-    with pytest.raises(Exception, match=".* start .*"):
-        graph_to_nfa(initial_graph, {42}, {0})
-    with pytest.raises(Exception, match=".* final .*"):
-        graph_to_nfa(initial_graph, {0}, {42})
+    graph_to_nfa(initial_graph, {42}, {0})
+    graph_to_nfa(initial_graph, {0}, {42})
 
 
 def test_ended_by_zero():

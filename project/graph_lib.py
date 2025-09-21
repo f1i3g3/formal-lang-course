@@ -79,17 +79,9 @@ def graph_to_nfa(
 
     if not start_states:
         start_states = nodes
-    elif not start_states.issubset(nodes):
-        raise Exception(
-            f"Error! Initial graph does not contain start states: {start_states.difference(set(nodes))}."
-        )
 
     if not final_states:
         final_states = nodes
-    elif not final_states.issubset(nodes):
-        raise Exception(
-            f"Error! Initial graph does not contain final states: {final_states.difference(set(nodes))}."
-        )
 
     for s in start_states:
         result_graph.add_start_state(s)

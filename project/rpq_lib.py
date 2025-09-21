@@ -9,9 +9,6 @@ from scipy.sparse import csc_matrix, kron
 from project.graph_lib import graph_to_nfa, regex_to_dfa
 
 
-# TODO: rewrite code!!
-
-
 class AdjacencyMatrixFA:
     """
     A finite automaton representation using sparse adjacency matrices.
@@ -24,7 +21,7 @@ class AdjacencyMatrixFA:
         if automaton is None:
             self.states_count = 0
             self.adj_matrices = {}
-            self.states_to_indexes = {}  # TODO: ?????
+            self.states_to_indexes = {}
             return
 
         self.states_count = len(automaton.states)

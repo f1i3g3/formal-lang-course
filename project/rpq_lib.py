@@ -4,7 +4,7 @@ from typing import Optional
 
 from networkx import MultiDiGraph
 from pyformlang.finite_automaton import Symbol, NondeterministicFiniteAutomaton, State
-from scipy.sparse import csc_matrix, kron
+from scipy.sparse import csc_matrix, kron, vstack
 
 from project.graph_lib import graph_to_nfa, regex_to_dfa
 
@@ -22,12 +22,17 @@ class AdjacencyMatrixFA:
             self.states_count = 0
             self.adj_matrices = {}
             self.states_to_indexes = {}
+            self.indexes_to_states = {}
             return
 
         self.states_count = len(automaton.states)
         self.states_to_indexes: dict[State, int] = {
             state: i for i, state in enumerate(automaton.states)
         }
+        self.indexes_to_states: dict[int, State] = {
+            i: state for state, i in self.states_to_indexes.items()
+        }
+
         self.start_states: set[State] = automaton.start_states
         self.final_states: set[State] = automaton.final_states
         self.adj_matrices: dict[Symbol, csc_matrix] = {}
@@ -179,5 +184,77 @@ def tensor_based_rpq(
                 final = final_state.value[1].value
 
                 valid_pairs.add((start, final))
+
+    return valid_pairs
+
+
+def ms_bfs_based_rpq(
+    regex: str, graph: MultiDiGraph, start_nodes: set[int], final_nodes: set[int]
+) -> set[tuple[int, int]]:
+    """
+    Performs regular path querying on a graph using matrix-based BFS approach.
+    """
+    dfa = AdjacencyMatrixFA(regex_to_dfa(regex))
+    nfa = AdjacencyMatrixFA(graph_to_nfa(graph, start_nodes, final_nodes))
+
+    nfa_start_index = list(nfa.states_to_indexes[st] for st in nfa.start_states)
+    dfa_start = dfa.states_to_indexes[list(dfa.start_states)[0]]
+    front = vstack(
+        [
+            csc_matrix(
+                ([True], ([dfa_start], [nfa_start])),
+                (dfa.states_count, nfa.states_count),
+                dtype=bool,
+            )
+            for nfa_start in nfa_start_index
+        ]
+    )
+
+    visited = front
+    symbols = set(dfa.adj_matrices.keys()) & set(nfa.adj_matrices.keys())
+    permutation_matrices: dict[Symbol, csc_matrix] = {
+        s: dfa.adj_matrices[s].transpose() for s in symbols
+    }
+
+    while front.count_nonzero() != 0:
+        new_front = front
+        for s in symbols:
+            front_for_symbol = front @ nfa.adj_matrices[s]
+            front_after_permutation = vstack(
+                [
+                    permutation_matrices[s]
+                    @ front_for_symbol[
+                        (i * dfa.states_count) : ((i + 1) * dfa.states_count), :
+                    ]
+                    for i in range(len(start_nodes))
+                ]
+            )
+            new_front += front_after_permutation
+        front = new_front.astype(bool) > visited
+        visited += front
+
+    valid_pairs = set()
+    final_matrix = csc_matrix((dfa.states_count, nfa.states_count), dtype=bool)
+    for nfa_final in nfa.final_states:
+        for dfa_final in dfa.final_states:
+            final_matrix[
+                dfa.states_to_indexes[dfa_final], nfa.states_to_indexes[nfa_final]
+            ] = True
+
+    _final_state = vstack([final_matrix for _ in range(len(start_nodes))])
+    final_state = vstack(
+        [
+            csc_matrix((dfa.states_count, nfa.states_count), dtype=bool)
+            for _ in range(len(start_nodes))
+        ]
+    )
+    for i in range(dfa.states_count * len(start_nodes)):
+        for j in range(nfa.states_count):
+            if (_final_state[i, j]) and (visited[i, j]):
+                final_state[i, j] = True
+
+    for r, c in zip(*final_state.nonzero()):
+        nfa_start = nfa.indexes_to_states[nfa_start_index[(r // dfa.states_count)]]
+        valid_pairs.add((nfa_start.value, nfa.indexes_to_states[c].value))
 
     return valid_pairs

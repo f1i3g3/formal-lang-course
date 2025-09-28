@@ -62,7 +62,7 @@ def regex_to_dfa(regex: str) -> DeterministicFiniteAutomaton:
     """
     Converts a regular expression string into a minimal deterministic finite automaton (DFA).
     """
-    return Regex(regex).to_epsilon_nfa().minimize()
+    return Regex(regex).to_epsilon_nfa().to_deterministic().minimize()
 
 
 def graph_to_nfa(

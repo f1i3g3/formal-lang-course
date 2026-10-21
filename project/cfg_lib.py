@@ -44,10 +44,10 @@ def split_productions(productions):
 
 
 def hellings_based_cfpq(
-        cfg: CFG,
-        graph: nx.DiGraph,
-        start_nodes: set[int] = None,
-        final_nodes: set[int] = None,
+    cfg: CFG,
+    graph: nx.DiGraph,
+    start_nodes: set[int] = None,
+    final_nodes: set[int] = None,
 ) -> set[tuple[int, int]]:
     """
     Return all (u, v) pairs connected by a path whose labels derive from the CFG start symbol,
@@ -86,8 +86,8 @@ def hellings_based_cfpq(
         (start, final)
         for start, final, nonterm in adjacency_matrix
         if (
-                start in start_nodes
-                and final in final_nodes
-                and nonterm.value == cfg.start_symbol.value
+            start in start_nodes
+            and final in final_nodes
+            and nonterm.value == cfg.start_symbol.value
         )
     }

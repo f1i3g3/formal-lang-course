@@ -3,6 +3,7 @@ import networkx as nx
 from pyformlang.cfg import CFG, Terminal, Variable, Epsilon
 from scipy.sparse import csc_matrix
 
+
 def cfg_to_weak_normal_form(cfg: CFG) -> CFG:
     """
     Convert a CFG to weak Chomsky normal form.
@@ -91,7 +92,8 @@ def hellings_based_cfpq(
             and nonterm.value == cfg.start_symbol.value
         )
     }
-    
+
+
 def matrix_based_cfpq(
     cfg: CFG,
     graph: nx.DiGraph,
@@ -107,7 +109,7 @@ def matrix_based_cfpq(
     epsilon_prods, term_prods, nonterm_prods = split_productions(cfg.productions)
     node_to_idx = {n: i for i, n in enumerate(graph.nodes)}
     idx_to_node = {i: n for n, i in node_to_idx.items()}
-    
+
     num_nodes = graph.number_of_nodes()
     adjacency_matrix: dict[Variable, csc_matrix] = {
         nonterm: csc_matrix((num_nodes, num_nodes), dtype=bool)
@@ -126,8 +128,11 @@ def matrix_based_cfpq(
     queue = set(cfg.variables)
     while queue:
         updated_var = queue.pop()
-        
-        for M_B, M_C in nonterm_prods: # M_A = M_A + M_B * M_C, if A -> BC in nonterm_prods
+
+        for (
+            M_B,
+            M_C,
+        ) in nonterm_prods:  # M_A = M_A + M_B * M_C, if A -> BC in nonterm_prods
             if updated_var != M_B and updated_var != M_C:
                 continue
 
@@ -135,7 +140,7 @@ def matrix_based_cfpq(
             for nonterm in nonterm_prods[(M_B, M_C)]:
                 old_matrix = adjacency_matrix[nonterm]
                 adjacency_matrix[nonterm] += matrix_change
-                
+
                 if (old_matrix != adjacency_matrix[nonterm]).count_nonzero() != 0:
                     queue.add(nonterm)
 

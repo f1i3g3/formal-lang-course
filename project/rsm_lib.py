@@ -1,15 +1,36 @@
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass
 
 from pyformlang.cfg import CFG
 from pyformlang.finite_automaton import (
+    EpsilonNFA,
+    NondeterministicFiniteAutomaton,
     State,
     Symbol,
-    NondeterministicFiniteAutomaton,
-    EpsilonNFA,
 )
 from pyformlang.rsa import RecursiveAutomaton
 
 from project.rpq_lib import AdjacencyMatrixFA
+
+
+@dataclass
+class RsmState:
+    """
+    An RSM state: a (non-terminal, box-internal state) pair.
+    """
+
+    nonterm: Symbol
+    state: State
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, RsmState)
+            and self.nonterm == other.nonterm
+            and self.state == other.state
+        )
+
+    def __hash__(self):
+        return hash((self.nonterm, self.state))
 
 
 def cfg_to_rsm(cfg: CFG) -> RecursiveAutomaton:
@@ -46,7 +67,7 @@ def rsm_to_nfa(rsm: RecursiveAutomaton) -> NondeterministicFiniteAutomaton:
             if transitions is None:
                 continue
 
-            for symbol in transitions.keys():
+            for symbol in transitions:
                 for to_st in (
                     transitions[symbol]
                     if isinstance(transitions[symbol], Iterable)
@@ -63,3 +84,28 @@ def boolean_decompress_rsm(rsm: RecursiveAutomaton) -> AdjacencyMatrixFA:
     Return the adjacency-matrix automaton obtained by flattening the RSM into an NFA via rsm_to_nfa.
     """
     return AdjacencyMatrixFA(rsm_to_nfa(rsm))
+
+
+def get_rsm_state_edges(
+    rsm: RecursiveAutomaton, from_state: RsmState
+) -> dict[Symbol, set[RsmState]]:
+    """
+    Return a mapping label -> set of successor RsmStates for edges leaving `from_state`
+     inside its box (empty if the box or state is absent).
+    """
+    nonterm = from_state.nonterm
+    edges = {}
+    if rsm.get_box(nonterm) is None:
+        return {}
+
+    nonterm_edges = rsm.get_box(nonterm).dfa.to_dict()
+    if from_state.state in nonterm_edges.keys():
+        for label, to_states in nonterm_edges[from_state.state].items():
+            if not isinstance(to_states, Iterable):
+                edges.setdefault(label, set()).add(RsmState(nonterm, to_states))
+                continue
+
+            for to_state in to_states:
+                edges.setdefault(label, set()).add(RsmState(nonterm, to_state))
+
+    return edges

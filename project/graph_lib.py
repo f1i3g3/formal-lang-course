@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Any
 
 import cfpq_data
 import networkx
@@ -17,7 +17,7 @@ class GraphInformation:
 
     nodes: int
     edges: int
-    labels: Set[str]
+    labels: set[str]
 
     def __init__(self, nodes, edges, labels):
         self.nodes = nodes
@@ -66,7 +66,7 @@ def regex_to_dfa(regex: str) -> DeterministicFiniteAutomaton:
 
 
 def graph_to_nfa(
-    graph: MultiDiGraph, start_states: Set[int] = None, final_states: Set[int] = None
+    graph: MultiDiGraph, start_states: set[int] = None, final_states: set[int] = None
 ) -> NondeterministicFiniteAutomaton:
     """
     Converts a directed multi graph with labeled edges into a nondeterministic finite automaton (NFA).
@@ -89,3 +89,15 @@ def graph_to_nfa(
         result_graph.add_final_state(s)
 
     return result_graph
+
+
+def get_graph_node_edges(graph: MultiDiGraph, from_node: Any) -> dict[Any, set[Any]]:
+    """
+    Return a mapping label -> set of target nodes for all edges leaving `from_node`.
+    """
+    edges = {}
+
+    for _, to_node, label in graph.edges(from_node, data="label"):
+        edges.setdefault(label, set()).add(to_node)
+
+    return edges

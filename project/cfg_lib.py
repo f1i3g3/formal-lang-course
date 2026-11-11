@@ -1,13 +1,12 @@
 import networkx as nx
-
-from pyformlang.cfg import CFG, Terminal, Variable, Epsilon
-from pyformlang.finite_automaton import Symbol, State
+from pyformlang.cfg import CFG, Epsilon, Terminal, Variable
+from pyformlang.finite_automaton import State, Symbol
 from pyformlang.rsa import RecursiveAutomaton
 from scipy.sparse import csc_matrix
 
-from project.graph_lib import graph_to_nfa
+from project.graph_lib import get_graph_node_edges, graph_to_nfa
 from project.rpq_lib import AdjacencyMatrixFA, intersect_automata
-from project.rsm_lib import boolean_decompress_rsm
+from project.rsm_lib import RsmState, boolean_decompress_rsm, get_rsm_state_edges
 
 
 def cfg_to_weak_normal_form(cfg: CFG) -> CFG:
@@ -233,3 +232,163 @@ def tensor_based_cfpq(
                 valid_pairs.add((start, final))
 
     return valid_pairs
+
+
+class GssV:
+    """
+    A vertex of the Graph-Structured Stack (GSS).
+
+    Combines an RSM state with a graph node, representing a point where a
+    (possibly pending) derivation is anchored: the RSM is in `rsm_state`
+    while the input graph has been consumed up to `graph_state`.
+    """
+
+    rsm_state: RsmState
+    graph_state: int
+
+    def __init__(self, rsm_st: RsmState, graph_st: int):
+        self.rsm_state = rsm_st
+        self.graph_state = graph_st
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, GssV)
+            and self.rsm_state == other.rsm_state
+            and self.graph_state == other.graph_state
+        )
+
+    def __hash__(self):
+        return hash((self.rsm_state, self.graph_state))
+
+
+class GllConfig:
+    """
+    A GLL configuration: the current RSM state, the current graph node,
+    and the current GSS vertex (top of the stack).
+    """
+
+    rsm_state: RsmState
+    graph_state: int
+    gss_v: GssV
+
+    def __init__(self, rsm_st: RsmState, graph_st: int, gss_v: GssV):
+        self.rsm_state = rsm_st
+        self.graph_state = graph_st
+        self.gss_v = gss_v
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, GllConfig)
+            and self.rsm_state == other.rsm_state
+            and self.graph_state == other.graph_state
+            and self.gss_v == other.gss_v
+        )
+
+    def __hash__(self):
+        return hash((self.rsm_state, self.graph_state, self.gss_v))
+
+
+def get_new_configs(
+    conf: GllConfig,
+    gss: nx.MultiDiGraph,
+    graph: nx.DiGraph,
+    rsm: RecursiveAutomaton,
+    res: set[tuple[int, int]],
+    init_gss_v: GssV,
+) -> set[GllConfig]:
+    """
+    Return successor configurations of `conf` in one GLL step (consume RSM+graph edges,
+     enter a box, or exit a box); mutates `gss` and `res`.
+    """
+    new_configs = set()
+    graph_edges: dict[any, set[any]] = get_graph_node_edges(
+        nx.MultiDiGraph(graph), conf.graph_state
+    )
+    rsm_edges: dict[Symbol, set[RsmState]] = get_rsm_state_edges(rsm, conf.rsm_state)
+
+    labels = set(graph_edges.keys()) & set(rsm_edges.keys())
+    for label in labels:
+        for rsm_st in rsm_edges[label]:
+            for graph_st in graph_edges[label]:
+                new_configs.add(GllConfig(rsm_st, graph_st, conf.gss_v))
+
+    for rsm_label in rsm_edges:
+        if rsm_label in rsm.labels:
+            for rsm_start_st in rsm.get_box(rsm_label).start_state:
+                new_rsm_st = RsmState(rsm_label, rsm_start_st)
+                new_gss_v = GssV(new_rsm_st, conf.graph_state)
+
+                if new_gss_v in gss.nodes and gss.nodes[new_gss_v]["pop_set"]:
+                    for graph_st in gss.nodes[new_gss_v]["pop_set"]:
+                        for rsm_st in rsm_edges[rsm_label]:
+                            gss.add_edge(new_gss_v, conf.gss_v, label=rsm_st)
+                            new_configs.add(GllConfig(rsm_st, graph_st, conf.gss_v))
+                    continue
+
+                for rsm_st in rsm_edges[rsm_label]:
+                    gss.add_node(new_gss_v, pop_set=None)
+                    gss.add_edge(new_gss_v, conf.gss_v, label=rsm_st)
+
+                new_configs.add(GllConfig(new_rsm_st, conf.graph_state, new_gss_v))
+
+    if conf.rsm_state.state in rsm.get_box(conf.rsm_state.nonterm).final_states:
+        if gss.nodes[conf.gss_v]["pop_set"] is None:
+            gss.nodes[conf.gss_v]["pop_set"] = set()
+        gss.nodes[conf.gss_v]["pop_set"].add(conf.graph_state)
+
+        gss_edges: dict[RsmState, set[GssV]] = get_graph_node_edges(gss, conf.gss_v)
+        for label in gss_edges:
+            for gss_v in gss_edges[label]:
+                if gss_v == init_gss_v:
+                    res.add((conf.gss_v.graph_state, conf.graph_state))
+                    continue
+                new_configs.add(GllConfig(label, conf.graph_state, gss_v))
+
+    return new_configs
+
+
+def gll_based_cfpq(
+    rsm: RecursiveAutomaton,
+    graph: nx.DiGraph,
+    start_nodes: set[int] = None,
+    final_nodes: set[int] = None,
+) -> set[tuple[int, int]]:
+    """
+    Return (u, v) pairs, u in start_nodes and v in final_nodes, connected by a path derivable
+    from the RSM initial label, via a GLL work list over configurations (None means all nodes).
+    """
+    states = set(n for n in graph.nodes)
+    start_nodes = set(n for n in start_nodes) if start_nodes else states
+    final_nodes = set(n for n in final_nodes) if final_nodes else states
+
+    queue: set[GllConfig] = set()
+    processed_config: set[GllConfig] = set()
+    gss = nx.MultiDiGraph()
+    init_gss_v = GssV(RsmState(Symbol("$"), State(0)), -1)
+    res = set()
+
+    # Initialization of configurations and GSS nodes
+    for rsm_start in rsm.get_box(rsm.initial_label).start_state:
+        for graph_state in start_nodes:
+            rsm_state = RsmState(rsm.initial_label, rsm_start)
+            gss_v = GssV(rsm_state, graph_state)
+
+            gss.add_node(gss_v, pop_set=None)
+            gss.add_edge(gss_v, init_gss_v, label=rsm_state)
+            config = GllConfig(rsm_state, graph_state, gss_v)
+            queue.add(config)
+
+    # Configuration processing
+    while queue:
+        config = queue.pop()
+        if config in processed_config:
+            continue
+
+        processed_config.add(config)
+        queue |= get_new_configs(config, gss, graph, rsm, res, init_gss_v)
+
+    return {
+        (start_state, final_state)
+        for start_state, final_state in res
+        if start_state in start_nodes and final_state in final_nodes
+    }

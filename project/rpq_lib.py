@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from typing import Optional
 
 from networkx import MultiDiGraph
-from pyformlang.finite_automaton import Symbol, NondeterministicFiniteAutomaton, State
+from pyformlang.finite_automaton import NondeterministicFiniteAutomaton, State, Symbol
 from scipy.sparse import csc_matrix, kron, vstack
 
 from project.graph_lib import graph_to_nfa, regex_to_dfa
